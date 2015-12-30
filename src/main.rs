@@ -1,5 +1,6 @@
 extern crate yaml_rust;
-use yaml_rust::YamlLoader;
+use yaml_rust::{YamlLoader,Yaml};
+//use std::process::Command;
 use std::error::Error;
 use std::io::prelude::*;
 use std::fs::File;
@@ -7,6 +8,10 @@ use std::path::Path;
 use std::env;
 
 mod mysql;
+mod database;
+
+use mysql::*;
+use database::*;
 
 fn open_file(path: &str) -> String {
     let path = Path::new(path);
@@ -38,25 +43,16 @@ fn main() {
     // Assumes we're in a ruby project
     let s: String = open_file("config/database.yml");
 
-    let docs = YamlLoader::load_from_str(&s).unwrap();
+    let docs: Vec<Yaml> = YamlLoader::load_from_str(&s).unwrap();
 
-    let doc = &docs[0];
+    let doc: &Yaml = &docs[0];
 
     println!("Connecting to Environment {}", environment);
 
-    let config = &doc[environment];
+    let config: &Yaml = &doc[environment];
 
-    // Assumes the adapter is MySql
-    let mut child = mysql::get_cmd(config)
-        .spawn()
-        .unwrap_or_else(|e| { panic!("failed to execute child: {}", e) });
-
-    let ecode = child
-        .wait()
-        .unwrap_or_else(|e| { panic!("failed to execute child: {}", e) });
-
-    match ecode.code() {
-        Some(x) => println!("Result: {}", x),
-        None    => println!("No exit code")
-    }
+    match config["adapter"].as_str().unwrap() {
+        "mysql2" => MySql::new(config).connect(),
+        _ => println!("Could find adapter")
+    };
 }
