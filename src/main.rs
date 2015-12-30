@@ -4,6 +4,7 @@ use std::error::Error;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
+use std::env;
 
 mod mysql;
 
@@ -21,21 +22,27 @@ fn open_file(path: &str) -> String {
     match file.read_to_string(&mut s) {
         Err(why) => panic!("couldn't read {}: {}", display,
                                                    Error::description(&why)),
-        Ok(_) => print!("Opened configuration file {}", display),
+        Ok(_) => println!("Opened configuration file {}", display),
     }
     s
 }
 
 fn main() {
-    // Environment should be passed into main
-    let environment = "production";
+    let args: Vec<String> = env::args().collect();
+
+    let environment: &str = match args.get(1) {
+        Some(x) => &x,
+        None => "production",
+    };
 
     // Assumes we're in a ruby project
-    let s = open_file("config/database.yml");
+    let s: String = open_file("config/database.yml");
 
     let docs = YamlLoader::load_from_str(&s).unwrap();
 
     let doc = &docs[0];
+
+    println!("Connecting to Environment {}", environment);
 
     let config = &doc[environment];
 
