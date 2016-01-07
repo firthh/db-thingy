@@ -40,7 +40,7 @@ fn database(d: &str) -> String {
 impl Database for MySql {
     fn new(config: &Yaml) -> DatabaseCommand {
         let possible_args = map!{
-            "host" =>     host,
+            "host" =>     host, // I want to be able to do this |h| { format!("-h{}", h) }
             "username" => username,
             "user" =>     username,
             "password" => password,
