@@ -1,11 +1,12 @@
 use std::process::Command;
+use std::collections::HashMap;
 use yaml_rust::Yaml;
 use database::*;
 
 macro_rules! map(
     { $($key:expr => $value:expr),+ } => {
         {
-            let mut m = ::std::collections::HashMap::new();
+            let mut m: HashMap<&str, fn(a:&str) -> String> = HashMap::new();
             $(
                 m.insert($key, $value);
             )+
@@ -16,36 +17,48 @@ macro_rules! map(
 
 pub struct MySql;
 
-fn add_arg<'t>(cmd: &'t mut Command, arg: &str) -> &'t mut Command {
+fn add_arg<'t>(cmd: &'t mut Command, arg: &str) {
 	cmd.arg(arg);
-	cmd
 }
 
+fn host(h: &str) -> String {
+    format!("-h{}", h)
+}
+
+fn username(u: &str) -> String {
+    format!("-u{}", u)
+}
+
+fn password(p: &str) -> String {
+    format!("--password={}", p)
+}
+
+fn database(d: &str) -> String {
+    format!("{}", d)
+}
 
 impl Database for MySql {
     fn new(config: &Yaml) -> DatabaseCommand {
         let possible_args = map!{
-            "host" => "-h{}",
-            "username" => "-u{}",
-            "user" => "-u{}",
-            "password" => "--password={}",
-            "database" => "{}"
+            "host" =>     host,
+            "username" => username,
+            "user" =>     username,
+            "password" => password,
+            "database" => database
         };
         let mut cmd = Command::new("mysql");
         match config.as_hash() {
         	Some(h) => {
-        		for (k, v) in h.iter() {
-        			println!("{} {}", possible_args.get(k.as_str().unwrap()).unwrap(), v.as_str().unwrap());
+        		  for (k, v) in h.iter() {
+                  match possible_args.get(k.as_str().unwrap()) {
+                      Some(arg) => add_arg(&mut cmd, &arg(v.as_str().unwrap())),
+                      None => ()
+                  }
         		}
-        		println!("done")
+        		()
         	},
-        	None => println!("nothing")
+        	None => ()
         }
-        
-        add_arg(&mut cmd, &format!("-h{}", config["host"].as_str().unwrap()));
-        add_arg(&mut cmd, &format!("-u{}", config["username"].as_str().unwrap()));
-        add_arg(&mut cmd, &format!("--password={}", config["password"].as_str().unwrap()));
-        add_arg(&mut cmd, &format!("{}", config["database"].as_str().unwrap()));
         DatabaseCommand { cmd: cmd }
     }
 }
