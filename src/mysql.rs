@@ -17,10 +17,6 @@ macro_rules! map(
 
 pub struct MySql;
 
-fn add_arg<'t>(cmd: &'t mut Command, arg: &str) {
-	cmd.arg(arg);
-}
-
 fn host(h: &str) -> String {
     format!("-h{}", h)
 }
@@ -51,7 +47,7 @@ impl Database for MySql {
         	Some(h) => {
         		  for (k, v) in h.iter() {
                   match possible_args.get(k.as_str().unwrap()) {
-                      Some(arg) => add_arg(&mut cmd, &arg(v.as_str().unwrap())),
+                      Some(arg) => { cmd.arg(&arg(v.as_str().unwrap())); () },
                       None => ()
                   }
         		}
