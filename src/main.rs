@@ -40,16 +40,14 @@ fn main() {
         None => "production",
     };
 
+    println!("Connecting to Environment {}", environment);
+
     // Assumes we're in a ruby project
     let s: String = open_file("config/database.yml");
 
     let docs: Vec<Yaml> = YamlLoader::load_from_str(&s).unwrap();
 
-    let doc: &Yaml = &docs[0];
-
-    println!("Connecting to Environment {}", environment);
-
-    let config: &Yaml = &doc[environment];
+    let config: &Yaml = &docs[0][environment];
 
     match config["adapter"].as_str().unwrap() {
         "mysql2" => MySql::new(config).connect(),
