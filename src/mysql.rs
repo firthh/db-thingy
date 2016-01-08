@@ -6,7 +6,7 @@ use database::*;
 macro_rules! map(
     { $($key:expr => $value:expr),+ } => {
         {
-            let mut m: HashMap<&str, fn(a:&str) -> String> = HashMap::new();
+            let mut m: HashMap<&str, fn(&str) -> String> = HashMap::new();
             $(
                 m.insert($key, $value);
             )+

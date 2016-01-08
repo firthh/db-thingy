@@ -15,13 +15,8 @@ impl DatabaseCommand {
             .spawn()
             .unwrap();
 
-        let ecode = child
+        child
             .wait()
             .unwrap();
-
-        match ecode.code() {
-            Some(x) => println!("Result: {}", x),
-            None    => println!("No exit code")
-        }
     }
 }
