@@ -46,8 +46,9 @@ impl Database for MySql {
         match config.as_hash() {
         	Some(h) => {
         		  for (k, v) in h.iter() {
+                  let value = v.as_str().unwrap_or("");
                   match possible_args.get(k.as_str().unwrap()) {
-                      Some(arg) => { cmd.arg(&arg(v.as_str().unwrap())); () },
+                      Some(arg) => { cmd.arg(&arg(value)); () },
                       None => ()
                   }
         		}
