@@ -6,7 +6,7 @@ use database::*;
 macro_rules! map(
     { $($key:expr => $value:expr),+ } => {
         {
-            let mut m: HashMap<&str, fn(&str) -> String> = HashMap::new();
+            let mut m: HashMap<&str, Box<Fn(String) -> String + 'static>> = HashMap::new();
             $(
                 m.insert($key, $value);
             )+
@@ -17,38 +17,22 @@ macro_rules! map(
 
 pub struct MySql;
 
-fn host(h: &str) -> String {
-    format!("-h{}", h)
-}
-
-fn username(u: &str) -> String {
-    format!("-u{}", u)
-}
-
-fn password(p: &str) -> String {
-    format!("--password={}", p)
-}
-
-fn database(d: &str) -> String {
-    format!("{}", d)
-}
-
 impl Database for MySql {
     fn new(config: &Yaml) -> DatabaseCommand {
         let possible_args = map!{
-            "host" =>     host, // I want to be able to do this |h| { format!("-h{}", h) }
-            "username" => username,
-            "user" =>     username,
-            "password" => password,
-            "database" => database
+            "host" =>     Box::new(move |h: String| format!("-h{}",h) ),
+            "username" => Box::new(move |u: String| format!("-u{}",u) ),
+            "user" =>     Box::new(move |u: String| format!("-u{}",u) ),
+            "password" => Box::new(move |p: String| format!("--password={}",p) ),
+            "database" => Box::new(move |d: String| d)
         };
         let mut cmd = Command::new("mysql");
         match config.as_hash() {
         	  Some(h) => {
         		    for (k, v) in h.iter() {
-                    let value = v.as_str().unwrap_or("");
+                    let value: String = v.as_str().unwrap_or("").to_string();
                     possible_args.get(k.as_str().unwrap())
-                        .and_then( |arg: &fn(&str) -> String| -> Option<String> { cmd.arg(&arg(value)); None });
+                        .and_then( |arg: &Box<Fn(String) -> String + 'static>| -> Option<String> { cmd.arg(&arg(value)); None });
         		        ()
         	      }
             },
