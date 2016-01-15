@@ -44,16 +44,14 @@ impl Database for MySql {
         };
         let mut cmd = Command::new("mysql");
         match config.as_hash() {
-        	Some(h) => {
-        		  for (k, v) in h.iter() {
-                  let value = v.as_str().unwrap_or("");
-                  match possible_args.get(k.as_str().unwrap()) {
-                      Some(arg) => { cmd.arg(&arg(value)); () },
-                      None => ()
-                  }
-        		}
-        		()
-        	},
+        	  Some(h) => {
+        		    for (k, v) in h.iter() {
+                    let value = v.as_str().unwrap_or("");
+                    possible_args.get(k.as_str().unwrap())
+                        .and_then( |arg: &fn(&str) -> String| -> Option<String> { cmd.arg(&arg(value)); None });
+        		        ()
+        	      }
+            },
         	None => ()
         }
         DatabaseCommand { cmd: cmd }
