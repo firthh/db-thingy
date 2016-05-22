@@ -8,10 +8,5 @@ in stdenv.mkDerivation rec {
     pkgs.cargo
     pkgs.rustc
   ];
-
-  shellHook = ''
-    
-  '';
-
 }
 
